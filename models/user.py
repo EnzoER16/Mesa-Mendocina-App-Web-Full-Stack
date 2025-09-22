@@ -11,6 +11,7 @@ class User(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(30), nullable=False)
 
     # Constructor de la clase User
     def __init__(self, name, email, password):
