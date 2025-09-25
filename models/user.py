@@ -8,10 +8,10 @@ class User(db.Model):
     
     # Definición de las columnas de la tabla
     id_user = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
+    username = db.Column(db.String(80), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(30), nullable=False)
+    role = db.Column(db.String(20), default='user') # 'user' o 'owner'
 
     # Constructor de la clase User
     def __init__(self, name, email, password):
@@ -27,6 +27,9 @@ class User(db.Model):
     def to_json(self):
         return {
             'id_user': self.id_user,
-            'name': self.name,
+            'username': self.name,
             'email': self.email,
+            'role': self.role
         }
+    
+    #to do: verificar el email
