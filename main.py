@@ -19,6 +19,9 @@ db.init_app(app)
 # Crear las tablas en la base de datos
 with app.app_context():
     from models.user import User
+    from models.location import Location
+    from models.rating import Rating
+    from models.plate import Plate
     db.create_all()
 
 # Ejecutar la aplicación en modo debug
