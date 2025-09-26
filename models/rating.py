@@ -10,19 +10,22 @@ class Rating(db.Model):
     comment = db.Column(db.Text)
     date = db.Column(db.Date, default=datetime.date.today, nullable=False)
 
-    # FK a User y Location
     id_user = db.Column(db.String(36), db.ForeignKey("users.id_user"), nullable=False)
     id_location = db.Column(db.String(36), db.ForeignKey("locations.id_location"), nullable=False)
 
-    def __init__(self, rate, comment, date):
+    def __init__(self, rate, comment, date, id_user, id_location):
         self.rate = rate
         self.comment = comment
         self.date = date
+        self.id_user
+        self.id_location
 
     def to_json(self):
         return {
             'id_rating': self.id_rating,
             'rate': self.rate,
             'comment': self.comment,
-            'date': self.date
+            'date': self.date,
+            'id_user': self.id_user,
+            'id_location': self.id_location
         }
