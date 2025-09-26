@@ -9,6 +9,9 @@ class Plate(db.Model):
     description = db.Column(db.Text)
     price = db.Column(db.Float, nullable=False)
 
+    # FK a Location
+    id_location = db.Column(db.String(36), db.ForeignKey("locations.id_location"), nullable=False)
+
     def __init__(self, name, description, price):
         self.name = name
         self.description = description
