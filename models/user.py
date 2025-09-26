@@ -14,10 +14,11 @@ class User(db.Model):
     role = db.Column(db.String(20), default='user') # 'user' o 'owner'
 
     # Constructor de la clase User
-    def __init__(self, name, email, password):
-        self.name = name
+    def __init__(self, username, email, password, role):
+        self.username = username
         self.email = email
         self.password_hash = generate_password_hash(password)
+        self.role = role
 
     # Verificar la contraseña del usuario
     def check_password(self, password):
@@ -27,7 +28,7 @@ class User(db.Model):
     def to_json(self):
         return {
             'id_user': self.id_user,
-            'username': self.name,
+            'username': self.username,
             'email': self.email,
             'role': self.role
         }
