@@ -12,6 +12,13 @@ class Location(db.Model):
     price_range = db.Column(db.String(80), nullable=False)
     phone = db.Column(db.String(50), unique=True, nullable=False)
 
+    # FK a User
+    id_user = db.Column(db.String(36), db.ForeignKey("users.id_user"), nullable=False)
+
+    # Relaciones
+    plates = db.relationship("Plate", backref="location", lazy=True)
+    ratings = db.relationship("Rating", backref="location", lazy=True)
+
     def __init__(self, name, address, department, schedule,price_range, phone):
         self.name = name
         self.address = address
