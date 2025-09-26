@@ -2,6 +2,7 @@ from flask import Flask
 from config.db import db
 from config.config import DATABASE_CONNECTION_URI
 from routes.user_routes import users_routes
+from routes.location_routes import locations_routes
 
 # Crear la instancia de Flask
 app = Flask(__name__)
@@ -12,6 +13,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Registrar el blueprint de rutas de usuarios
 app.register_blueprint(users_routes)
+app.register_blueprint(locations_routes)
 
 # Inicializar la extensión SQLAlchemy con la aplicación
 db.init_app(app)
