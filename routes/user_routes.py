@@ -25,18 +25,21 @@ def create_user():
     data = request.get_json()
 
     # Validar que se proporcionen todos los campos necesarios
-    if not data or not data.get("name") or not data.get("email") or not data.get("password"):
+    if not data or not data.get("username") or not data.get("email") or not data.get("password"):
         return jsonify({"error": "Faltan campos obligatorios"}), 400
 
     # Verificar si ya existe el email
     if User.query.filter_by(email=data["email"]).first():
         return jsonify({"error": "El email ya está registrado"}), 400
 
+    role = data.get("role", "user")
+
     # Crear un nuevo usuario
     new_user = User(
-        name=data["name"],
+        username=data["username"],
         email=data["email"],
-        password=data["password"])
+        password=data["password"],
+        role=role)
 
     # Guardar el nuevo usuario en la base de datos
     db.session.add(new_user)
@@ -54,8 +57,8 @@ def update_user(id_user):
 
     data = request.get_json()
 
-    if "name" in data:
-        user.name = data["name"]
+    if "username" in data:
+        user.username = data["username"]
     if "email" in data:
         # Verificar que el nuevo email no esté ya en uso
         if User.query.filter_by(email=data["email"]).first() and user.email != data["email"]:
@@ -63,7 +66,9 @@ def update_user(id_user):
         user.email = data["email"]
     if "password" in data:
         user.__init__(user.name, user.email, data["password"])  # Re-hashear password
-
+    if "role" in data:
+        user.role = data["role"]
+        
     db.session.commit()
     return jsonify(user.to_json()), 200
 
