@@ -65,7 +65,7 @@ def update_user(id_user):
             return jsonify({"error": "El email ya está en uso"}), 400
         user.email = data["email"]
     if "password" in data:
-        user.__init__(user.name, user.email, data["password"])  # Re-hashear password
+        user.__init__(user.username, user.email, data["password"], user.role)  # Re-hashear password
     if "role" in data:
         user.role = data["role"]
         
