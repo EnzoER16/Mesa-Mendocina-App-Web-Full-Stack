@@ -17,8 +17,8 @@ class Rating(db.Model):
         self.rate = rate
         self.comment = comment
         self.date = date
-        self.id_user
-        self.id_location
+        self.id_user = id_user
+        self.id_location = id_user
 
     def to_json(self):
         return {
