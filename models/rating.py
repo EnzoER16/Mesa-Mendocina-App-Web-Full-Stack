@@ -10,6 +10,10 @@ class Rating(db.Model):
     comment = db.Column(db.Text)
     date = db.Column(db.Date, default=datetime.date.today, nullable=False)
 
+    # FK a User y Location
+    id_user = db.Column(db.String(36), db.ForeignKey("users.id_user"), nullable=False)
+    id_location = db.Column(db.String(36), db.ForeignKey("locations.id_location"), nullable=False)
+
     def __init__(self, rate, comment, date):
         self.rate = rate
         self.comment = comment
