@@ -79,3 +79,22 @@ def edit_plate(current_user, id_plate):
         
     db.session.commit()
     return jsonify(plate.to_json()), 200
+
+
+@plates_bp.route('/delete/<string:id_plate>', methods=['DELETE'])
+@token_required(role="owner")
+def delete_plate(current_user, id_plate):
+    plate = Plate.query.get(id_plate)
+    if not plate:
+        return jsonify({"error": "Plato no encontrado"}), 404
+    
+    location = Location.query.get(plate.id_location)
+    if not location:
+        return jsonify({"error": "Local no encontrado"}), 404
+
+    if str(location.id_user) != str(current_user.id_user):
+        return jsonify({"error": "No autorizado"}), 403
+
+    db.session.delete(plate)
+    db.session.commit()
+    return jsonify({"message": "Plato eliminado correctamente"}), 200
