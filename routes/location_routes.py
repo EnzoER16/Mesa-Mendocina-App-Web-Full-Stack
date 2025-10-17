@@ -59,7 +59,18 @@ def edit_location(current_user, id_location):
 
     data = request.get_json()
 
-
+    if "name" in data:
+        location.name = data["name"]
+    if "address" in data:
+        location.address = data["address"]
+    if "department" in data:
+        location.department = data["department"]
+    if "schedule" in data:
+        location.schedule = data["schedule"]
+    if "price_range" in data:
+        location.price_range = data["price_range"]
+    if "phone" in data:
+        location.phone = data["phone"]
         
     db.session.commit()
     return jsonify(location.to_json()), 200
