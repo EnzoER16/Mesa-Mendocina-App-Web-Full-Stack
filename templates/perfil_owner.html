@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Mi Perfil - Dueño{% endblock %}
+
+{% block content %}
+<h2>Bienvenido, {{ username }} (Dueño de local)</h2>
+<ul class="list-group mt-3">
+    <li class="list-group-item"><a href="{{ url_for('register_location') }}">Registrar mi negocio</a></li>
+    <li class="list-group-item"><a href="{{ url_for('load_plates') }}">Cargar Platos</a></li>
+    <li class="list-group-item"><a href="{{ url_for('add_promotion') }}">Cargar Promociones</a></li>
+    <li class="list-group-item"><a href="#" id="edit-user-link">Cambiar contraseña / Email</a></li>
+    <li class="list-group-item"><a href="#" id="delete-user-link" class="text-danger">Eliminar cuenta</a></li>
+</ul>
+
+<!-- Reutilizamos el mismo modal y JS del perfil_user.html -->
+<div id="edit-user-modal" style="display:none;">
+    <h3>Editar usuario</h3>
+    <form id="edit-user-form">
+        <div>
+            <label>Username:</label>
+            <input type="text" name="username" value="{{ username }}">
+        </div>
+        <div>
+            <label>Email:</label>
+            <input type="email" name="email" value="{{ session.get('email', '') }}">
+        </div>
+        <div>
+            <label>Contraseña:</label>
+            <input type="password" name="password" placeholder="Nueva contraseña">
+        </div>
+        <button type="submit">Guardar cambios</button>
+        <button type="button" id="close-edit">Cancelar</button>
+    </form>
+</div>
+
+<script>
+    const userId = "{{ session['user_id'] }}";
+
+    document.getElementById('edit-user-link').addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('edit-user-modal').style.display = 'block';
+    });
+    document.getElementById('close-edit').addEventListener('click', () => {
+        document.getElementById('edit-user-modal').style.display = 'none';
+    });
+
+    document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        const token = localStorage.getItem('token');
+
+        const res = await fetch(`/api/users/edit/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+            alert('Usuario actualizado correctamente');
+            location.reload();
+        } else {
+            alert(result.error || 'Error al actualizar');
+        }
+    });
+
+    document.getElementById('delete-user-link').addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (!confirm('¿Estás seguro de eliminar tu cuenta?')) return;
+
+        const token = localStorage.getItem('token');
+
+        const res = await fetch(`/api/users/delete/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+            alert('Cuenta eliminada');
+            window.location.href = '/';
+        } else {
+            alert(result.error || 'Error al eliminar');
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+
+{% include '_carousel.html' %}
+
+<h2 id="locales" class="mt-5">Locales registrados</h2>
+<div class="row" id="localCards">
+    {% for loc in locations %}
+    {% include '_local_card.html' %}
+    {% endfor %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,19 @@
+<div id="carouselPlatos" class="carousel slide mb-5" data-bs-ride="carousel">
+    <div class="carousel-inner">
+        {% for plate in featured_plates %}
+        <div class="carousel-item {% if loop.index0 == 0 %}active{% endif %}">
+            <img src="{{ plate.image_url }}" class="d-block w-100" alt="{{ plate.name }}">
+            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
+                <h5>{{ plate.name }}</h5>
+                <p>{{ plate.description }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselPlatos" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#carouselPlatos" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+    </button>
+</div>

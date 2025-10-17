@@ -1,0 +1,168 @@
+/* Estilos generales */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #fff8f0;
+}
+
+/* Header sticky */
+.navbar {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Botón login animado */
+.login-btn:hover {
+    transform: scale(1.1);
+    transition: 0.2s ease-in-out;
+}
+
+/* Dropdown hover para Login */
+.nav-item.dropdown:hover .dropdown-menu {
+    display: block;
+    margin-top: 0;
+    /* elimina gap si hay */
+}
+
+/* Opcional: quita flechita del toggle */
+.nav-item.dropdown .dropdown-toggle::after {
+    display: none;
+}
+
+/* Carousel */
+.carousel-caption {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+}
+
+/* Cards locales */
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* --- Estilos de perfil --- */
+h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.list-group {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.list-group-item {
+    background-color: #fff8f0;
+    border: 1px solid #e0d8cc;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.list-group-item a {
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+}
+
+.list-group-item a:hover {
+    color: #f7931e;
+    transform: scale(1.05);
+}
+
+/* --- Modal de edición --- */
+#edit-user-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff8f0;
+    border: 2px solid #f0e2d8;
+    border-radius: 10px;
+    padding: 25px;
+    z-index: 1050;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+#edit-user-modal h3 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+#edit-user-form div {
+    margin-bottom: 10px;
+}
+
+#edit-user-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+#edit-user-form input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+#edit-user-form button {
+    padding: 8px 15px;
+    margin-top: 10px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: #f7931e;
+    color: white;
+    font-weight: bold;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+#edit-user-form button:hover {
+    background-color: #e67e22;
+    transform: scale(1.05);
+}
+
+.form-card {
+    background-color: #fff8f0;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 500px;
+    margin-top: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.btn-primary {
+    background-color: #ff7f50;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-primary:hover {
+    transform: scale(1.05);
+}
