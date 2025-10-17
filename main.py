@@ -9,25 +9,15 @@ from flask_migrate import Migrate
 
 # Crear la instancia de Flask
 app = Flask(__name__)
-# Configurar la URI de la base de datos
-app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_CONNECTION_URI
-# Desactivar el seguimiento de modificaciones
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config.from_object(Config)
 
-# Registrar el blueprint de rutas de usuarios
-app.register_blueprint(users_routes)
-app.register_blueprint(locations_routes)
-
-# Inicializar la extensión SQLAlchemy con la aplicación
 db.init_app(app)
+migrate = Migrate(app,db)
 
-# Crear las tablas en la base de datos
-with app.app_context():
-    from models.user import User
-    from models.location import Location
-    from models.rating import Rating
-    from models.plate import Plate
-    db.create_all()
+app.register_blueprint(users_bp)
+app.register_blueprint(locations_bp)
+app.register_blueprint(ratings_bp)
+app.register_blueprint(plates_bp)
 
 # Ejecutar la aplicación en modo debug
 if __name__ == '__main__':
