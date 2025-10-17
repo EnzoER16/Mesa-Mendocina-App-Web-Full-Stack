@@ -6,7 +6,7 @@ from routes.user_routes import token_required
 locations_bp = Blueprint('locations', __name__, url_prefix='/api/locations')
 
 
-@locations_routes.route('/locations', methods=['GET'])
+@locations_bp.route('/', methods=['GET'])
 def get_locations():
     locations = Location.query.all()
 
@@ -15,7 +15,7 @@ def get_locations():
 
     return jsonify([location.to_json() for location in locations]), 200
 
-@locations_routes.route('/locations/get/<string:id_location>', methods=['GET'])
+@locations_bp.route('/<string:id_location>', methods=['GET'])
 def get_location(id_location):
     location = Location.query.get(id_location)
     if not location:
