@@ -1,8 +1,10 @@
 from flask import Blueprint, jsonify, request
 from config.db import db
 from models.location import Location
+from routes.user_routes import token_required
 
-locations_routes = Blueprint('locations_routes', __name__, url_prefix='/api')
+locations_bp = Blueprint('locations', __name__, url_prefix='/api/locations')
+
 
 @locations_routes.route('/locations', methods=['GET'])
 def get_locations():
