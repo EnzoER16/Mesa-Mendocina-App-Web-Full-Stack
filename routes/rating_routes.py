@@ -44,3 +44,28 @@ def create_rating(current_user):
 
     return jsonify(new_rating.to_json()), 201
 
+
+@ratings_bp.route('/edit/<string:id_rating>', methods=['PUT'])
+@token_required(role="user")
+def edit_rating(current_user, id_rating):
+    rating = Rating.query.get(id_rating)
+    if not rating:
+        return jsonify({"error": "Valoración no encontrada"}), 404
+
+    if rating.id_user != current_user.id:
+        return jsonify({"error": "No autorizado"}), 403
+
+    data = request.get_json()
+
+    if "rate" in data:
+        rating.rate = data["rate"]
+    if "comment" in data:
+        rating.comment = data["comment"]
+    if "date" in data:
+        rating.date = data["date"]
+    if "id_location" in data:
+        rating.id_location = data["id_location"]
+        
+    db.session.commit()
+    return jsonify(rating.to_json()), 200
+
