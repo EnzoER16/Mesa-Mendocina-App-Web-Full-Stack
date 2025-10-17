@@ -11,6 +11,7 @@ from models.user import User
 # Definición del Blueprint para las rutas de usuario
 users_routes = Blueprint('users_routes', __name__, url_prefix='/api')
 
+# Decorador para validar JWT y roles
 def token_required(role=None):
     def decorator(f):
         @wraps(f)
@@ -32,7 +33,7 @@ def token_required(role=None):
         return decorated
     return decorator
 
-
+# Rutas de registro y login
 @users_routes.route("/auth/register", methods=["POST"])
 def register():
     data = request.get_json()
@@ -47,7 +48,6 @@ def register():
     db.session.add(new_user)
     db.session.commit()
     return jsonify({'message': 'Usuario creado correctamente'}), 201
-
 
 @users_routes.route("/auth/login", methods=["POST"])
 def login():
@@ -67,8 +67,7 @@ def login():
         'username': user.username
     })
 
-# Ruta para obtener todos los usuarios
-
+# Obtener todos los usuarios (solo admin)
 @users_routes.route('/users', methods=['GET'])
 @token_required(role="admin")
 def get_users(current_user):
@@ -77,17 +76,18 @@ def get_users(current_user):
         return jsonify({'message': 'No hay usuarios registrados.'}), 200
     return jsonify([user.to_json() for user in users]), 200
 
-# Ruta para obtener un usuario por su ID
+# Obtener un usuario por ID (propio usuario)
 @users_routes.route('/users/<string:id_user>', methods=['GET'])
 @token_required()
 def get_user(current_user, id_user):
     user = User.query.get(id_user)
     if not user:
         return jsonify({"error": "Usuario no encontrado"}), 404
-    if current_user.id_user != id_user:          # propio usuario
+    if current_user.id_user != id_user:
         return jsonify({"error": "No autorizado"}), 403
     return jsonify(user.to_json()), 200
-# Ruta para actualizar un usuario existente
+
+# Actualizar usuario (propio usuario)
 @users_routes.route('/users/update/<string:id_user>', methods=['PUT'])
 @token_required()
 def update_user(current_user, id_user):
@@ -95,36 +95,14 @@ def update_user(current_user, id_user):
     if not user:
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    if current_user.id_user != id_user:  # propio usuario
+    if current_user.id_user != id_user:
         return jsonify({"error": "No autorizado"}), 403
 
     data = request.get_json()
-
     if "username" in data:
         user.username = data["username"]
     if "email" in data:
         if User.query.filter_by(email=data["email"]).first() and user.email != data["email"]:
-            return jsonify({"error": "El email ya está en uso"}), 400
-        user.email = data["email"]
-    if "password" in data:
-        user.__init__(user.username, user.email, data["password"], user.role)
-    if "role" in data:
-        user.role = data["role"]
-        
-    db.session.commit()
-    return jsonify(user.to_json()), 200
-
-
- # Solo el propio usuario puede actualizarse
-  if current_user.id_user != id_user:
-    return jsonify({"error": "No autorizado"}), 403
-
-    data = request.get_json()
-
-if "username" in data:
-        user.username = data["username"]
- if "email" in data:
-      if User.query.filter_by(email=data["email"]).first() and user.email != data["email"]:
             return jsonify({"error": "El email ya está en uso"}), 400
         user.email = data["email"]
     if "password" in data:
@@ -135,8 +113,7 @@ if "username" in data:
     db.session.commit()
     return jsonify(user.to_json()), 200
 
-
-# Ruta para eliminar un usuario
+# Eliminar usuario (propio usuario o admin)
 @users_routes.route('/users/delete/<string:id_user>', methods=['DELETE'])
 @token_required()
 def delete_user(current_user, id_user):
@@ -144,7 +121,6 @@ def delete_user(current_user, id_user):
     if not user:
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    # Solo el propio usuario o admin puede eliminar
     if current_user.id_user != id_user and current_user.role != "admin":
         return jsonify({"error": "No autorizado"}), 403
 
