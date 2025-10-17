@@ -78,12 +78,16 @@ def get_users(current_user):
     return jsonify([user.to_json() for user in users]), 200
 
 # Ruta para obtener un usuario por su ID
-@users_routes.route('/users/get/<string:id_user>', methods=['GET'])
-def get_user(id_user):
+@users_routes.route('/users/<string:id_user>', methods=['GET'])
+@token_required()
+def get_user(current_user, id_user):
     user = User.query.get(id_user)
     if not user:
         return jsonify({"error": "Usuario no encontrado"}), 404
+    if current_user.id_user != id_user:          # propio usuario
+        return jsonify({"error": "No autorizado"}), 403
     return jsonify(user.to_json()), 200
+
 
 # Ruta para crear un nuevo usuario
 @users_routes.route('/users/create', methods=['POST'])
