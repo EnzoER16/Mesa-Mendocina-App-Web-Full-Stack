@@ -69,3 +69,16 @@ def edit_rating(current_user, id_rating):
     db.session.commit()
     return jsonify(rating.to_json()), 200
 
+@ratings_bp.route('/delete/<string:id_rating>', methods=['DELETE'])
+@token_required(role="user")
+def delete_rating(current_user, id_rating):
+    rating = Rating.query.get(id_rating)
+    if not rating:
+        return jsonify({"error": "Valoración no encontrada"}), 404
+    
+    if rating.id_user != current_user.id:
+        return jsonify({"error": "No autorizado"}), 403
+
+    db.session.delete(rating)
+    db.session.commit()
+    return jsonify({"message": "Valoración eliminada correctamente"}), 200
