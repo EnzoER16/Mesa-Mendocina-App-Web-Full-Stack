@@ -1,8 +1,11 @@
 from flask import Flask
 from config.db import db
-from config.config import DATABASE_CONNECTION_URI
-from routes.user_routes import users_routes
-from routes.location_routes import locations_routes
+from config.config import Config
+from routes.user_routes import users_bp
+from routes.location_routes import locations_bp
+from routes.rating_routes import ratings_bp
+from routes.plate_routes import plates_bp
+from flask_migrate import Migrate
 
 # Crear la instancia de Flask
 app = Flask(__name__)
