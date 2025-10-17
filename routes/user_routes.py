@@ -87,61 +87,66 @@ def get_user(current_user, id_user):
     if current_user.id_user != id_user:          # propio usuario
         return jsonify({"error": "No autorizado"}), 403
     return jsonify(user.to_json()), 200
-
- # Validar que se proporcionen todos los campos necesarios
-   if not data or not data.get("username") or not data.get("email") or not data.get("password"):
-        return jsonify({"error": "Faltan campos obligatorios"}), 400
-
-    # Verificar si ya existe el email
-    if User.query.filter_by(email=data["email"]).first():
-        return jsonify({"error": "El email ya está registrado"}), 400
-
-    role = data.get("role", "user")
-
-    # Crear un nuevo usuario
-    new_user = User(
-        username=data["username"],
-        email=data["email"],
-        password=data["password"],
-        role=role)
-
-    # Guardar el nuevo usuario en la base de datos
-    db.session.add(new_user)
-    db.session.commit()
-
-    # Devolver la respuesta con el usuario creado
-    return jsonify(new_user.to_json()), 201
-
 # Ruta para actualizar un usuario existente
 @users_routes.route('/users/update/<string:id_user>', methods=['PUT'])
-def update_user(id_user):
+@token_required()
+def update_user(current_user, id_user):
     user = User.query.get(id_user)
     if not user:
         return jsonify({"error": "Usuario no encontrado"}), 404
+
+    if current_user.id_user != id_user:  # propio usuario
+        return jsonify({"error": "No autorizado"}), 403
 
     data = request.get_json()
 
     if "username" in data:
         user.username = data["username"]
     if "email" in data:
-        # Verificar que el nuevo email no esté ya en uso
         if User.query.filter_by(email=data["email"]).first() and user.email != data["email"]:
             return jsonify({"error": "El email ya está en uso"}), 400
         user.email = data["email"]
     if "password" in data:
-        user.__init__(user.username, user.email, data["password"], user.role)  # Re-hashear password
+        user.__init__(user.username, user.email, data["password"], user.role)
     if "role" in data:
         user.role = data["role"]
         
     db.session.commit()
     return jsonify(user.to_json()), 200
 
+
+ # Solo el propio usuario puede actualizarse
+  if current_user.id_user != id_user:
+    return jsonify({"error": "No autorizado"}), 403
+
+    data = request.get_json()
+
+if "username" in data:
+        user.username = data["username"]
+ if "email" in data:
+      if User.query.filter_by(email=data["email"]).first() and user.email != data["email"]:
+            return jsonify({"error": "El email ya está en uso"}), 400
+        user.email = data["email"]
+    if "password" in data:
+        user.password_hash = generate_password_hash(data["password"])
+    if "role" in data:
+        user.role = data["role"]
+
+    db.session.commit()
+    return jsonify(user.to_json()), 200
+
+
 # Ruta para eliminar un usuario
 @users_routes.route('/users/delete/<string:id_user>', methods=['DELETE'])
-def delete_user(id_user):
+@token_required()
+def delete_user(current_user, id_user):
     user = User.query.get(id_user)
     if not user:
         return jsonify({"error": "Usuario no encontrado"}), 404
+
+    # Solo el propio usuario o admin puede eliminar
+    if current_user.id_user != id_user and current_user.role != "admin":
+        return jsonify({"error": "No autorizado"}), 403
 
     db.session.delete(user)
     db.session.commit()
