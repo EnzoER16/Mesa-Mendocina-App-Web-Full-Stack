@@ -1,3 +1,9 @@
+import jwt
+from flask import current_app as app
+from functools import wraps
+from datetime import datetime, timedelta
+from werkzeug.security import generate_password_hash, check_password_hash
+
 from flask import Blueprint, request, jsonify, render_template
 from config.db import db
 from models.user import User
