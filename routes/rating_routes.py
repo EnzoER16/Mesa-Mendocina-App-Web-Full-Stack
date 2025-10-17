@@ -13,3 +13,9 @@ def get_ratings():
         return jsonify({'message': 'No hay valoraciones registradas.'}), 200
 
     return jsonify([rating.to_json() for rating in ratings]), 200
+@ratings_bp.route('/<string:id_rating>', methods=['GET'])
+def get_rating(id_rating):
+    rating = Rating.query.get(id_rating)
+    if not rating:
+        return jsonify({"error": "Valoración no encontrada"}), 404
+    return jsonify(rating.to_json()), 200
