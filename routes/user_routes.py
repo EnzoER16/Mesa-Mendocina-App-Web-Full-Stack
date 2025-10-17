@@ -11,6 +11,62 @@ from models.user import User
 # Definición del Blueprint para las rutas de usuario
 users_routes = Blueprint('users_routes', __name__, url_prefix='/api')
 
+def token_required(role=None):
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            token = request.headers.get('Authorization')
+            if not token:
+                return jsonify({'message': 'Token faltante'}), 401
+            try:
+                token = token.split()[1]  # Bearer <token>
+                data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+                current_user = User.query.get(data['id'])
+                if not current_user:
+                    return jsonify({'message': 'Usuario no encontrado'}), 404
+                if role and current_user.role != role:
+                    return jsonify({'message': 'No autorizado'}), 403
+            except Exception as e:
+                return jsonify({'message': 'Token inválido', 'error': str(e)}), 401
+            return f(current_user, *args, **kwargs)
+        return decorated
+    return decorator
+
+
+@users_routes.route("/auth/register", methods=["POST"])
+def register():
+    data = request.get_json()
+    if User.query.filter_by(email=data['email']).first():
+        return jsonify({'message': 'El email ya existe'}), 400
+    new_user = User(
+        username=data['username'],
+        email=data['email'],
+        password=data['password'],
+        role=data.get('role', 'user') # por defecto user
+    )
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify({'message': 'Usuario creado correctamente'}), 201
+
+
+@users_routes.route("/auth/login", methods=["POST"])
+def login():
+    data = request.get_json()
+    user = User.query.filter_by(email=data['email']).first()
+    if not user or not check_password_hash(user.password_hash, data['password']):
+        return jsonify({'message': 'Credenciales inválidas'}), 401
+
+    token = jwt.encode({
+        'id': user.id_user,
+        'exp': datetime.utcnow() + timedelta(hours=1)
+    }, app.config['SECRET_KEY'], algorithm="HS256")
+
+    return jsonify({
+        'token': token,
+        'role': user.role,
+        'username': user.username
+    })
+
 # Ruta para obtener todos los usuarios
 @users_routes.route('/users', methods=['GET'])
 def get_users():
