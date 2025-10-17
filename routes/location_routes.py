@@ -76,11 +76,15 @@ def edit_location(current_user, id_location):
     return jsonify(location.to_json()), 200
 
 
-@locations_routes.route('/location/delete/<string:id_location>', methods=['DELETE'])
-def delete_location(id_location):
+@locations_bp.route('/delete/<string:id_location>', methods=['DELETE'])
+@token_required(role="owner")
+def delete_location(current_user, id_location):
     location = Location.query.get(id_location)
     if not location:
         return jsonify({"error": "Local no encontrado"}), 404
+    
+    if location.id_user != current_user.id:
+        return jsonify({"error": "No autorizado"}), 403
 
     db.session.delete(location)
     db.session.commit()
