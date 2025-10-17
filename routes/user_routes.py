@@ -88,14 +88,8 @@ def get_user(current_user, id_user):
         return jsonify({"error": "No autorizado"}), 403
     return jsonify(user.to_json()), 200
 
-
-# Ruta para crear un nuevo usuario
-@users_routes.route('/users/create', methods=['POST'])
-def create_user():
-    data = request.get_json()
-
-    # Validar que se proporcionen todos los campos necesarios
-    if not data or not data.get("username") or not data.get("email") or not data.get("password"):
+ # Validar que se proporcionen todos los campos necesarios
+   if not data or not data.get("username") or not data.get("email") or not data.get("password"):
         return jsonify({"error": "Faltan campos obligatorios"}), 400
 
     # Verificar si ya existe el email
