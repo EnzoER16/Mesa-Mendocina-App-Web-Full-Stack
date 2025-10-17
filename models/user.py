@@ -14,7 +14,7 @@ class User(db.Model):
     role = db.Column(db.String(20), default='user') # 'user' o 'owner'
 
     # Constructor de la clase User
-    def __init__(self, username, email, password, role):
+    def __init__(self, username, email, password, role="user"):
         self.username = username
         self.email = email
         self.password_hash = generate_password_hash(password)

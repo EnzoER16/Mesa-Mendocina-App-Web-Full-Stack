@@ -1,10 +1,12 @@
 from flask import Blueprint, jsonify, request
 from config.db import db
 from models.location import Location
+from routes.user_routes import token_required
 
-locations_routes = Blueprint('locations_routes', __name__, url_prefix='/api')
+locations_bp = Blueprint('locations', __name__, url_prefix='/api/locations')
 
-@locations_routes.route('/locations', methods=['GET'])
+
+@locations_bp.route('/', methods=['GET'])
 def get_locations():
     locations = Location.query.all()
 
@@ -13,18 +15,21 @@ def get_locations():
 
     return jsonify([location.to_json() for location in locations]), 200
 
-@locations_routes.route('/locations/get/<string:id_location>', methods=['GET'])
+
+@locations_bp.route('/<string:id_location>', methods=['GET'])
 def get_location(id_location):
     location = Location.query.get(id_location)
     if not location:
         return jsonify({"error": "Local no encontrado"}), 404
     return jsonify(location.to_json()), 200
 
-@locations_routes.route('/locations/create', methods=['POST'])
-def create_location():
+
+@locations_bp.route('/create', methods=['POST'])
+@token_required(role="owner")
+def create_location(current_user):
     data = request.get_json()
 
-    if not data or not data.get("name") or not data.get("address") or not data.get("department") or not data.get("schedule") or not data.get("price_range") or not data.get("phone") or not data.get("id_user"):
+    if not data or not data.get("name") or not data.get("address") or not data.get("department") or not data.get("schedule") or not data.get("price_range") or not data.get("phone"):
         return jsonify({"error": "Faltan campos obligatorios"}), 400
 
     new_location = Location(
@@ -34,18 +39,23 @@ def create_location():
         schedule=data["schedule"],
         price_range=data["price_range"],
         phone=data["phone"],
-        id_user=data["id_user"])
+        id_user=current_user.id_user)
 
     db.session.add(new_location)
     db.session.commit()
 
     return jsonify(new_location.to_json()), 201
 
-@locations_routes.route('/location/update/<string:id_location>', methods=['PUT'])
-def update_location(id_location):
+
+@locations_bp.route('/edit/<string:id_location>', methods=['PUT'])
+@token_required(role="owner")
+def edit_location(current_user, id_location):
     location = Location.query.get(id_location)
     if not location:
         return jsonify({"error": "Local no encontrado"}), 404
+
+    if location.id_user != current_user.id:
+        return jsonify({"error": "No autorizado"}), 403
 
     data = request.get_json()
 
@@ -61,17 +71,20 @@ def update_location(id_location):
         location.price_range = data["price_range"]
     if "phone" in data:
         location.phone = data["phone"]
-    if "id_user" in data:
-        location.id_user = data["id_user"]
         
     db.session.commit()
     return jsonify(location.to_json()), 200
 
-@locations_routes.route('/location/delete/<string:id_location>', methods=['DELETE'])
-def delete_location(id_location):
+
+@locations_bp.route('/delete/<string:id_location>', methods=['DELETE'])
+@token_required(role="owner")
+def delete_location(current_user, id_location):
     location = Location.query.get(id_location)
     if not location:
         return jsonify({"error": "Local no encontrado"}), 404
+    
+    if location.id_user != current_user.id:
+        return jsonify({"error": "No autorizado"}), 403
 
     db.session.delete(location)
     db.session.commit()
