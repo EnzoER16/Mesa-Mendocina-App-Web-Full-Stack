@@ -50,3 +50,32 @@ def create_plate(current_user):
     db.session.commit()
 
     return jsonify(new_plate.to_json()), 201
+
+
+@plates_bp.route('/edit/<string:id_plate>', methods=['PUT'])
+@token_required(role="owner")
+def edit_plate(current_user, id_plate):
+    plate = Plate.query.get(id_plate)
+    if not plate:
+        return jsonify({"error": "Plato no encontrado"}), 404
+
+    location = Location.query.get(plate.id_location)
+    if not location:
+        return jsonify({"error": "Local no encontrado"}), 404
+
+    if str(location.id_user) != str(current_user.id_user):
+        return jsonify({"error": "No autorizado"}), 403
+
+    data = request.get_json()
+
+    if "name" in data:
+        plate.name = data["name"]
+    if "description" in data:
+        plate.description = data["description"]
+    if "price" in data:
+        plate.price = data["price"]
+    if "id_location" in data:
+        plate.id_location = data["id_location"]
+        
+    db.session.commit()
+    return jsonify(plate.to_json()), 200
