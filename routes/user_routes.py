@@ -68,13 +68,13 @@ def login():
     })
 
 # Ruta para obtener todos los usuarios
-@users_routes.route('/users', methods=['GET'])
-def get_users():
-    users = User.query.all()
 
+@users_routes.route('/users', methods=['GET'])
+@token_required(role="admin")
+def get_users(current_user):
+    users = User.query.all()
     if not users:
         return jsonify({'message': 'No hay usuarios registrados.'}), 200
-
     return jsonify([user.to_json() for user in users]), 200
 
 # Ruta para obtener un usuario por su ID
