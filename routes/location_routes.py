@@ -22,11 +22,12 @@ def get_location(id_location):
         return jsonify({"error": "Local no encontrado"}), 404
     return jsonify(location.to_json()), 200
 
-@locations_routes.route('/locations/create', methods=['POST'])
-def create_location():
+@locations_bp.route('/create', methods=['POST'])
+@token_required(role="owner")
+def create_location(current_user):
     data = request.get_json()
 
-    if not data or not data.get("name") or not data.get("address") or not data.get("department") or not data.get("schedule") or not data.get("price_range") or not data.get("phone") or not data.get("id_user"):
+    if not data or not data.get("name") or not data.get("address") or not data.get("department") or not data.get("schedule") or not data.get("price_range") or not data.get("phone"):
         return jsonify({"error": "Faltan campos obligatorios"}), 400
 
     new_location = Location(
@@ -36,12 +37,13 @@ def create_location():
         schedule=data["schedule"],
         price_range=data["price_range"],
         phone=data["phone"],
-        id_user=data["id_user"])
+        id_user=current_user.id_user)
 
     db.session.add(new_location)
     db.session.commit()
 
     return jsonify(new_location.to_json()), 201
+
 
 @locations_routes.route('/location/update/<string:id_location>', methods=['PUT'])
 def update_location(id_location):
