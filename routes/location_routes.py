@@ -15,12 +15,14 @@ def get_locations():
 
     return jsonify([location.to_json() for location in locations]), 200
 
+
 @locations_bp.route('/<string:id_location>', methods=['GET'])
 def get_location(id_location):
     location = Location.query.get(id_location)
     if not location:
         return jsonify({"error": "Local no encontrado"}), 404
     return jsonify(location.to_json()), 200
+
 
 @locations_bp.route('/create', methods=['POST'])
 @token_required(role="owner")
@@ -45,31 +47,23 @@ def create_location(current_user):
     return jsonify(new_location.to_json()), 201
 
 
-@locations_routes.route('/location/update/<string:id_location>', methods=['PUT'])
-def update_location(id_location):
+@locations_bp.route('/edit/<string:id_location>', methods=['PUT'])
+@token_required(role="owner")
+def edit_location(current_user, id_location):
     location = Location.query.get(id_location)
     if not location:
         return jsonify({"error": "Local no encontrado"}), 404
 
+    if location.id_user != current_user.id:
+        return jsonify({"error": "No autorizado"}), 403
+
     data = request.get_json()
 
-    if "name" in data:
-        location.name = data["name"]
-    if "address" in data:
-        location.address = data["address"]
-    if "department" in data:
-        location.department = data["department"]
-    if "schedule" in data:
-        location.schedule = data["schedule"]
-    if "price_range" in data:
-        location.price_range = data["price_range"]
-    if "phone" in data:
-        location.phone = data["phone"]
-    if "id_user" in data:
-        location.id_user = data["id_user"]
+
         
     db.session.commit()
     return jsonify(location.to_json()), 200
+
 
 @locations_routes.route('/location/delete/<string:id_location>', methods=['DELETE'])
 def delete_location(id_location):
