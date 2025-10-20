@@ -54,7 +54,7 @@ def edit_location(current_user, id_location):
     if not location:
         return jsonify({"error": "Local no encontrado"}), 404
 
-    if location.id_user != current_user.id:
+    if location.id_user != current_user.id_user:
         return jsonify({"error": "No autorizado"}), 403
 
     data = request.get_json()
@@ -83,7 +83,7 @@ def delete_location(current_user, id_location):
     if not location:
         return jsonify({"error": "Local no encontrado"}), 404
     
-    if location.id_user != current_user.id:
+    if location.id_user != current_user.id_user:
         return jsonify({"error": "No autorizado"}), 403
 
     db.session.delete(location)
