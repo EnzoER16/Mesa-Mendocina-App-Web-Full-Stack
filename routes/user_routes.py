@@ -43,8 +43,8 @@ def register():
         username=data['username'],
         email=data['email'],
         password=data['password'],
-        role=data.get('role', 'user') # por defecto user
-    )
+        role=data.get('role', 'user')) # por defecto user
+    
     db.session.add(new_user)
     db.session.commit()
     return jsonify({'message': 'Usuario creado correctamente'}), 201
@@ -58,14 +58,13 @@ def login():
 
     token = jwt.encode({
         'id': user.id_user,
-        'exp': datetime.utcnow() + timedelta(hours=1)
-    }, app.config['SECRET_KEY'], algorithm="HS256")
+        'exp': datetime.utcnow() + timedelta(hours=1)},
+        app.config['SECRET_KEY'], algorithm="HS256")
 
     return jsonify({
         'token': token,
         'role': user.role,
-        'username': user.username
-    })
+        'username': user.username})
 
 # Obtener todos los usuarios (solo admin)
 @users_routes.route('/users', methods=['GET'])

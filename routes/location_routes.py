@@ -5,7 +5,6 @@ from routes.user_routes import token_required
 
 locations_bp = Blueprint('locations', __name__, url_prefix='/api/locations')
 
-
 @locations_bp.route('/', methods=['GET'])
 def get_locations():
     locations = Location.query.all()
@@ -15,14 +14,12 @@ def get_locations():
 
     return jsonify([location.to_json() for location in locations]), 200
 
-
 @locations_bp.route('/<string:id_location>', methods=['GET'])
 def get_location(id_location):
     location = Location.query.get(id_location)
     if not location:
         return jsonify({"error": "Local no encontrado"}), 404
     return jsonify(location.to_json()), 200
-
 
 @locations_bp.route('/create', methods=['POST'])
 @token_required(role="owner")
@@ -45,7 +42,6 @@ def create_location(current_user):
     db.session.commit()
 
     return jsonify(new_location.to_json()), 201
-
 
 @locations_bp.route('/edit/<string:id_location>', methods=['PUT'])
 @token_required(role="owner")
@@ -74,7 +70,6 @@ def edit_location(current_user, id_location):
         
     db.session.commit()
     return jsonify(location.to_json()), 200
-
 
 @locations_bp.route('/delete/<string:id_location>', methods=['DELETE'])
 @token_required(role="owner")
