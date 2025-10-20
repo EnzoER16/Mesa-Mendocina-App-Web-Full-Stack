@@ -36,8 +36,7 @@ def create_rating(current_user):
         comment=data["comment"],
         date=data["date"],
         id_user=current_user.id_user,
-        id_location=data["id_location"]
-    )
+        id_location=data["id_location"])
 
     db.session.add(new_rating)
     db.session.commit()
@@ -52,7 +51,7 @@ def edit_rating(current_user, id_rating):
     if not rating:
         return jsonify({"error": "Valoración no encontrada"}), 404
 
-    if rating.id_user != current_user.id:
+    if rating.id_user != current_user.id_user:
         return jsonify({"error": "No autorizado"}), 403
 
     data = request.get_json()
@@ -76,7 +75,7 @@ def delete_rating(current_user, id_rating):
     if not rating:
         return jsonify({"error": "Valoración no encontrada"}), 404
     
-    if rating.id_user != current_user.id:
+    if rating.id_user != current_user.id_user:
         return jsonify({"error": "No autorizado"}), 403
 
     db.session.delete(rating)
