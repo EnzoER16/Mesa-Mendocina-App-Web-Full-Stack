@@ -14,14 +14,12 @@ def get_ratings():
 
     return jsonify([rating.to_json() for rating in ratings]), 200
 
-
 @ratings_bp.route('/<string:id_rating>', methods=['GET'])
 def get_rating(id_rating):
     rating = Rating.query.get(id_rating)
     if not rating:
         return jsonify({"error": "Valoración no encontrada"}), 404
     return jsonify(rating.to_json()), 200
-
 
 @ratings_bp.route('/create', methods=['POST'])
 @token_required(role="user")
@@ -42,7 +40,6 @@ def create_rating(current_user):
     db.session.commit()
 
     return jsonify(new_rating.to_json()), 201
-
 
 @ratings_bp.route('/edit/<string:id_rating>', methods=['PUT'])
 @token_required(role="user")
