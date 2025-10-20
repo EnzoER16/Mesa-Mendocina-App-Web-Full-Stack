@@ -1,17 +1,14 @@
+from flask import Blueprint, request, jsonify
+from config.db import db
+from models.user import User
 import jwt
 from flask import current_app as app
 from functools import wraps
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from flask import Blueprint, request, jsonify, render_template
-from config.db import db
-from models.user import User
+users_bp = Blueprint('users', __name__, url_prefix='/api/users')
 
-# Definición del Blueprint para las rutas de usuario
-users_routes = Blueprint('users_routes', __name__, url_prefix='/api')
-
-# Decorador para validar JWT y roles
 def token_required(role=None):
     def decorator(f):
         @wraps(f)
@@ -20,7 +17,7 @@ def token_required(role=None):
             if not token:
                 return jsonify({'message': 'Token faltante'}), 401
             try:
-                token = token.split()[1]  # Bearer <token>
+                token = token.split()[1] # Bearer <token>
                 data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
                 current_user = User.query.get(data['id'])
                 if not current_user:
@@ -33,8 +30,7 @@ def token_required(role=None):
         return decorated
     return decorator
 
-# Rutas de registro y login
-@users_routes.route("/auth/register", methods=["POST"])
+@users_bp.route("/auth/register", methods=["POST"])
 def register():
     data = request.get_json()
     if User.query.filter_by(email=data['email']).first():
@@ -44,12 +40,12 @@ def register():
         email=data['email'],
         password=data['password'],
         role=data.get('role', 'user')) # por defecto user
-    
+
     db.session.add(new_user)
     db.session.commit()
     return jsonify({'message': 'Usuario creado correctamente'}), 201
 
-@users_routes.route("/auth/login", methods=["POST"])
+@users_bp.route("/auth/login", methods=["POST"])
 def login():
     data = request.get_json()
     user = User.query.filter_by(email=data['email']).first()
@@ -58,46 +54,43 @@ def login():
 
     token = jwt.encode({
         'id': user.id_user,
-        'exp': datetime.utcnow() + timedelta(hours=1)},
-        app.config['SECRET_KEY'], algorithm="HS256")
+        'exp': datetime.utcnow() + timedelta(hours=1)}, app.config['SECRET_KEY'], algorithm="HS256")
 
     return jsonify({
         'token': token,
         'role': user.role,
         'username': user.username})
 
-# Obtener todos los usuarios (solo admin)
-@users_routes.route('/users', methods=['GET'])
-@token_required(role="admin")
-def get_users(current_user):
-    users = User.query.all()
-    if not users:
-        return jsonify({'message': 'No hay usuarios registrados.'}), 200
-    return jsonify([user.to_json() for user in users]), 200
+# @users_bp.route('/', methods=['GET'])
+# @token_required(role="admin")
+# def get_users(current_user):
+#     users = User.query.all()
+#     if not users:
+#         return jsonify({'message': 'No hay usuarios registrados.'}), 200
+#     return jsonify([user.to_json() for user in users]), 200
 
-# Obtener un usuario por ID (propio usuario)
-@users_routes.route('/users/<string:id_user>', methods=['GET'])
+@users_bp.route('/<string:id_user>', methods=['GET'])
 @token_required()
 def get_user(current_user, id_user):
     user = User.query.get(id_user)
     if not user:
         return jsonify({"error": "Usuario no encontrado"}), 404
-    if current_user.id_user != id_user:
+    if current_user.id_user != id_user: # propio usuario
         return jsonify({"error": "No autorizado"}), 403
     return jsonify(user.to_json()), 200
 
-# Actualizar usuario (propio usuario)
-@users_routes.route('/users/update/<string:id_user>', methods=['PUT'])
+@users_bp.route('/edit/<string:id_user>', methods=['PUT'])
 @token_required()
-def update_user(current_user, id_user):
+def edit_user(current_user, id_user):
     user = User.query.get(id_user)
     if not user:
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    if current_user.id_user != id_user:
+    if current_user.id_user != id_user: # propio usuario
         return jsonify({"error": "No autorizado"}), 403
 
     data = request.get_json()
+
     if "username" in data:
         user.username = data["username"]
     if "email" in data:
@@ -108,19 +101,18 @@ def update_user(current_user, id_user):
         user.password_hash = generate_password_hash(data["password"])
     if "role" in data:
         user.role = data["role"]
-
+        
     db.session.commit()
     return jsonify(user.to_json()), 200
 
-# Eliminar usuario (propio usuario o admin)
-@users_routes.route('/users/delete/<string:id_user>', methods=['DELETE'])
+@users_bp.route('/delete/<string:id_user>', methods=['DELETE'])
 @token_required()
 def delete_user(current_user, id_user):
     user = User.query.get(id_user)
     if not user:
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    if current_user.id_user != id_user and current_user.role != "admin":
+    if current_user.id_user != id_user: # propio usuario
         return jsonify({"error": "No autorizado"}), 403
 
     db.session.delete(user)
