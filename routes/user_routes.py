@@ -1,120 +1,107 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, session, redirect, url_for, flash, render_template
 from config.db import db
 from models.user import User
-import jwt
-from flask import current_app as app
-from functools import wraps
-from datetime import datetime, timedelta
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
+from utils.authentication import login_required
 
-users_bp = Blueprint('users', __name__, url_prefix='/api/users')
+users_bp = Blueprint('users', __name__, url_prefix='/users')
 
-def token_required(role=None):
-    def decorator(f):
-        @wraps(f)
-        def decorated(*args, **kwargs):
-            token = request.headers.get('Authorization')
-            if not token:
-                return jsonify({'message': 'Token faltante'}), 401
-            try:
-                token = token.split()[1] # Bearer <token>
-                data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
-                current_user = User.query.get(data['id'])
-                if not current_user:
-                    return jsonify({'message': 'Usuario no encontrado'}), 404
-                if role and current_user.role != role:
-                    return jsonify({'message': 'No autorizado'}), 403
-            except Exception as e:
-                return jsonify({'message': 'Token inválido', 'error': str(e)}), 401
-            return f(current_user, *args, **kwargs)
-        return decorated
-    return decorator
+@users_bp.route('/auth/register', methods=['GET', 'POST'])
+def user_register():
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+        role = request.form.get('role', 'user')
 
-@users_bp.route("/auth/register", methods=["POST"])
-def register():
-    data = request.get_json()
-    if User.query.filter_by(email=data['email']).first():
-        return jsonify({'message': 'El email ya existe'}), 400
-    new_user = User(
-        username=data['username'],
-        email=data['email'],
-        password=data['password'],
-        role=data.get('role', 'user')) # por defecto user
-
-    db.session.add(new_user)
-    db.session.commit()
-    return jsonify({'message': 'Usuario creado correctamente'}), 201
-
-@users_bp.route("/auth/login", methods=["POST"])
-def login():
-    data = request.get_json()
-    user = User.query.filter_by(email=data['email']).first()
-    if not user or not check_password_hash(user.password_hash, data['password']):
-        return jsonify({'message': 'Credenciales inválidas'}), 401
-
-    token = jwt.encode({
-        'id': user.id_user,
-        'exp': datetime.utcnow() + timedelta(hours=1)}, app.config['SECRET_KEY'], algorithm="HS256")
-
-    return jsonify({
-        'token': token,
-        'role': user.role,
-        'username': user.username})
-
-# @users_bp.route('/', methods=['GET'])
-# @token_required(role="admin")
-# def get_users(current_user):
-#     users = User.query.all()
-#     if not users:
-#         return jsonify({'message': 'No hay usuarios registrados.'}), 200
-#     return jsonify([user.to_json() for user in users]), 200
-
-@users_bp.route('/<string:id_user>', methods=['GET'])
-@token_required()
-def get_user(current_user, id_user):
-    user = User.query.get(id_user)
-    if not user:
-        return jsonify({"error": "Usuario no encontrado"}), 404
-    if current_user.id_user != id_user: # propio usuario
-        return jsonify({"error": "No autorizado"}), 403
-    return jsonify(user.to_json()), 200
-
-@users_bp.route('/edit/<string:id_user>', methods=['PUT'])
-@token_required()
-def edit_user(current_user, id_user):
-    user = User.query.get(id_user)
-    if not user:
-        return jsonify({"error": "Usuario no encontrado"}), 404
-
-    if current_user.id_user != id_user: # propio usuario
-        return jsonify({"error": "No autorizado"}), 403
-
-    data = request.get_json()
-
-    if "username" in data:
-        user.username = data["username"]
-    if "email" in data:
-        if User.query.filter_by(email=data["email"]).first() and user.email != data["email"]:
-            return jsonify({"error": "El email ya está en uso"}), 400
-        user.email = data["email"]
-    if "password" in data:
-        user.password_hash = generate_password_hash(data["password"])
-    if "role" in data:
-        user.role = data["role"]
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash('El correo ya está registrado.', 'danger')
+            return redirect(url_for('users.user_register'))
         
-    db.session.commit()
-    return jsonify(user.to_json()), 200
+        new_user = User(username=username, email=email, password=password, role=role)
+        db.session.add(new_user)
+        db.session.commit()
 
-@users_bp.route('/delete/<string:id_user>', methods=['DELETE'])
-@token_required()
-def delete_user(current_user, id_user):
-    user = User.query.get(id_user)
-    if not user:
-        return jsonify({"error": "Usuario no encontrado"}), 404
+        flash('Registro exitoso. ¡Bienvenido a Mesa Mendocina!', 'success')
+        return redirect(url_for('users.user_login'))
+    
+    return render_template('users/register.html')
 
-    if current_user.id_user != id_user: # propio usuario
-        return jsonify({"error": "No autorizado"}), 403
+@users_bp.route('/auth/login', methods=['GET', 'POST'])
+def user_login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        user = User.query.filter_by(email=email).first()
+        if user and user.check_password(password):
+            session['user_id'] = user.id_user
+            session['username'] = user.username
+            session['role'] = user.role
+
+            # flash(f'Bienvenido, {user.username}!', 'success')
+            return redirect(url_for('private'))
+        else:
+            flash('Correo o contraseña incorrectos.', 'danger')
+            return redirect(url_for('users.user_login'))
+    
+    return render_template('users/login.html')
+
+@users_bp.route('/logout')
+@login_required
+def user_logout():
+    session.clear()
+    # flash('Sesión cerrada correctamente.', 'info')
+    return redirect(url_for('public'))
+
+@users_bp.route('/<id_user>')
+@login_required
+def view_user(id_user):
+    user = User.query.get_or_404(id_user)
+    if session['user_id'] != user.id_user:
+        flash('No tienes permiso para ver este perfil.', 'danger')
+        return redirect(url_for('private'))
+    return render_template('users/view.html', user=user)
+
+@users_bp.route('/edit/<id_user>', methods=['GET', 'POST'])
+@login_required
+def edit_user(id_user):
+    user = User.query.get_or_404(id_user)
+    if session.get('user_id') != user.id_user:
+        flash('No tienes permiso para editar este perfil.', 'danger')
+        return redirect(url_for('private'))
+
+    if request.method == 'POST':
+        user.username = request.form['username']
+        user.email = request.form['email']
+        password = request.form.get('password')
+
+        if password:
+            user.password_hash = generate_password_hash(password)
+
+        db.session.commit()
+        flash('Perfil actualizado correctamente.', 'success')
+        return redirect(url_for('users.view_user', id_user=user.id_user))
+    
+    return render_template('users/edit.html', user=user)
+
+@users_bp.route('/delete/<id_user>', methods=['POST'])
+@login_required
+def delete_user(id_user):
+    user = User.query.get_or_404(id_user)
+    if session['user_id'] != user.id_user:
+        flash('No tienes permiso para eliminar este perfil.', 'danger')
+        return redirect(url_for('private'))
 
     db.session.delete(user)
     db.session.commit()
-    return jsonify({"message": "Usuario eliminado correctamente"}), 200
+
+    # cerrar sesion si se elimina la cuenta
+    if session.get('user_id') == id_user:
+        session.clear()
+        flash('Tu cuenta ha sido eliminada.', 'info')
+        return redirect(url_for('public'))
+    
+    flash('Usuario eliminado correctamente.', 'info')
+    return redirect(url_for('private'))
