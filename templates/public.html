@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% set hide_nav = True %}
+
+{% block title %}Inicio · Mesa Mendocina{% endblock %}
+
+{% block content %}
+
+    <style>
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            overflow-x: hidden;
+            color: #fff;
+        }
+
+        .video-background {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            object-fit: cover;
+            filter: brightness(80%);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 0;
+        }
+
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        h1 {
+            font-size: 4rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+        }
+
+        p {
+            font-size: 1.3rem;
+            margin: 15px 0 30px;
+            max-width: 600px;
+        }
+
+        .btn-custom {
+            background-color: #ff7b00;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            color: white;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            background-color: #ffa73a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .locales-section {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 60px 20px;
+            text-align: center;
+            z-index: 2;
+            position: relative;
+        }
+
+        .locales-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            font-weight: 600;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            transition: transform 0.3s ease, background 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .card img {
+            border-radius: 10px 10px 0 0;
+            height: 250px;
+            object-fit: cover;
+        }
+
+        .card-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+    </style>
+
+    <!-- video de fondo -->
+    <video autoplay muted loop class="video-background">
+        <source src="{{ url_for('static', filename='videos/background.mp4') }}" type="video/mp4">
+    </video>
+    <div class="overlay"></div>
+
+    <section class="hero">
+        <h1>🍷 Mesa Mendocina</h1>
+        <p>Explorá los sabores auténticos de Mendoza. Conocé los locales gastronómicos que ofrecen lo mejor de nuestra
+            tierra.</p>
+        <div>
+            <a href="{{ url_for('users.user_login') }}" class="btn btn-custom me-3">Iniciar Sesión</a>
+            <a href="{{ url_for('users.user_register') }}" class="btn btn-custom">Registrarse</a>
+        </div>
+    </section>
+
+    <!-- locales destacados -->
+    <section class="locales-section py-4 text-light" style="background-color: rgba(0, 0, 0, 0);">
+        <h2 class="text-center mb-3 fs-4">Locales Destacados</h2>
+        <div class="container">
+            <div class="row justify-content-center g-3">
+
+                {% for location in locations %}
+                <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                    <div class="card h-100 text-light border-0 shadow-sm"
+                        style="max-width: 260px; margin: 0 auto; background-color: transparent;">
+                        <img src="{{ url_for('static', filename='img/locations/' + (location.image or 'no_image.png')) }}"
+                            class="card-img-top" style="height: 150px; object-fit: cover;" alt="{{ location.name }}">
+                        <div class="card-body text-center p-2">
+                            <h6 class="card-title mb-2">{{ location.name }}</h6>
+                            {% if location.description %}
+                                <p class="card-text small text-light opacity-75" style="font-size: 0.85rem;">
+                                    {{ location.description }}
+                                </p>
+                            {% endif %}
+
+                            {% if session.get('user_id') %}
+                                <a href="{{ url_for('locations.view_location', id_location=location.id_location) }}"
+                                class="btn btn-primary btn-sm px-3 py-1 mt-2">Ver más</a>
+                            {% else %}
+                                <a href="{{ url_for('users.user_login') }}" class="btn btn-primary btn-sm px-3 py-1 mt-2">Ver más</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% else %}
+                <p class="text-center">No hay locales destacados aún.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <style>
+        .locales-section {
+            background-color: #212529;
+        }
+
+        .locales-section .card {
+            background-color: #2c3034;
+            border-radius: 8px;
+        }
+
+        .locales-section .card-title {
+            color: #ffffff;
+        }
+
+        .locales-section .card-text {
+            color: #cccccc;
+        }
+    </style>
+
+{% endblock %}
