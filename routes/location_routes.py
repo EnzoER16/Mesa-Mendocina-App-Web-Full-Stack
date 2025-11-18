@@ -1,86 +1,130 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, request, session, redirect, url_for, flash, render_template, current_app
 from config.db import db
 from models.location import Location
-from routes.user_routes import token_required
+from utils.authentication import login_required, role_required
+from werkzeug.utils import secure_filename
+import os
 
-locations_bp = Blueprint('locations', __name__, url_prefix='/api/locations')
+locations_bp = Blueprint('locations', __name__, url_prefix='/locations')
 
-@locations_bp.route('/', methods=['GET'])
-def get_locations():
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@locations_bp.route('/')
+def list_locations():
     locations = Location.query.all()
+    return render_template('locations/list.html', locations=locations)
 
-    if not locations:
-        return jsonify({'message': 'No hay locales registrados.'}), 200
+@locations_bp.route('/<id_location>')
+@login_required
+def view_location(id_location):
+    location = Location.query.get_or_404(id_location)
+    return render_template('locations/view.html', location=location)
 
-    return jsonify([location.to_json() for location in locations]), 200
+@locations_bp.route('/create', methods=['GET', 'POST'])
+@login_required
+@role_required('owner')
+def create_location():
 
-@locations_bp.route('/<string:id_location>', methods=['GET'])
-def get_location(id_location):
-    location = Location.query.get(id_location)
-    if not location:
-        return jsonify({"error": "Local no encontrado"}), 404
-    return jsonify(location.to_json()), 200
+    departments = [
+        "Capital", "Godoy Cruz", "Guaymallén", "Las Heras", "Lavalle", "Luján de Cuyo",
+        "Maipú", "San Martín", "Rivadavia", "Junín", "Santa Rosa", "La Paz",
+        "Tunuyán", "Tupungato", "San Carlos", "San Rafael", "General Alvear", "Malargüe"
+        ]
 
-@locations_bp.route('/create', methods=['POST'])
-@token_required(role="owner")
-def create_location(current_user):
-    data = request.get_json()
+    if request.method == 'POST':
+        name = request.form['name']
+        address = request.form['address']
+        department = request.form['department']
+        phone = request.form['phone']
+        description = request.form.get('description')
+        id_user = session['user_id']
 
-    if not data or not data.get("name") or not data.get("address") or not data.get("department") or not data.get("schedule") or not data.get("price_range") or not data.get("phone"):
-        return jsonify({"error": "Faltan campos obligatorios"}), 400
+        # imagen
+        file = request.files.get('image')
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            upload_path = os.path.join(current_app.root_path, 'static', 'img', 'locations')
+            os.makedirs(upload_path, exist_ok=True)
+            file.save(os.path.join(upload_path, filename))
+        else:
+            filename = 'no_image.png' # imagen por defecto
 
-    new_location = Location(
-        name=data["name"],
-        address=data["address"],
-        department=data["department"],
-        schedule=data["schedule"],
-        price_range=data["price_range"],
-        phone=data["phone"],
-        id_user=current_user.id_user)
+        # telefono distinto
+        existing_location = Location.query.filter_by(phone=phone).first()
+        if existing_location:
+            flash('Este número de teléfono ya está registrado.', 'danger')
+            return redirect(url_for('locations.create_location'))
 
-    db.session.add(new_location)
-    db.session.commit()
+        new_location = Location(
+            name=name,
+            address=address,
+            department=department,
+            phone=phone,
+            id_user=id_user,
+            description=description,
+            image=filename
+        )
+        db.session.add(new_location)
+        db.session.commit()
+        flash('Ubicación creada correctamente.', 'success')
+        return redirect(url_for('locations.list_locations'))
 
-    return jsonify(new_location.to_json()), 201
+    return render_template('locations/create.html', departments=departments)
 
-@locations_bp.route('/edit/<string:id_location>', methods=['PUT'])
-@token_required(role="owner")
-def edit_location(current_user, id_location):
-    location = Location.query.get(id_location)
-    if not location:
-        return jsonify({"error": "Local no encontrado"}), 404
+@locations_bp.route('/edit/<id_location>', methods=['GET', 'POST'])
+@login_required
+@role_required('owner')
+def edit_location(id_location):
+    location = Location.query.get_or_404(id_location)
 
-    if location.id_user != current_user.id_user:
-        return jsonify({"error": "No autorizado"}), 403
+    if session['user_id'] != location.id_user:
+        flash('No tienes permiso para editar esta ubicación.', 'danger')
+        return redirect(url_for('locations.list_locations'))
 
-    data = request.get_json()
+    if request.method == 'POST':
+        location.name = request.form['name']
+        location.address = request.form['address']
+        location.department = request.form['department']
+        location.phone = request.form['phone']
+        location.description = request.form.get('description')
 
-    if "name" in data:
-        location.name = data["name"]
-    if "address" in data:
-        location.address = data["address"]
-    if "department" in data:
-        location.department = data["department"]
-    if "schedule" in data:
-        location.schedule = data["schedule"]
-    if "price_range" in data:
-        location.price_range = data["price_range"]
-    if "phone" in data:
-        location.phone = data["phone"]
-        
-    db.session.commit()
-    return jsonify(location.to_json()), 200
+        # imagen
+        file = request.files.get('image')
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            upload_path = os.path.join(current_app.root_path, 'static', 'img', 'locations')
+            os.makedirs(upload_path, exist_ok=True)
+            file.save(os.path.join(upload_path, filename))
 
-@locations_bp.route('/delete/<string:id_location>', methods=['DELETE'])
-@token_required(role="owner")
-def delete_location(current_user, id_location):
-    location = Location.query.get(id_location)
-    if not location:
-        return jsonify({"error": "Local no encontrado"}), 404
-    
-    if location.id_user != current_user.id_user:
-        return jsonify({"error": "No autorizado"}), 403
+            # borrar la imagen anterior si no era la de por defecto
+            if location.image and location.image != 'no_image.png':
+                old_path = os.path.join(upload_path, location.image)
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+
+            location.image = filename
+        # si no se sube nada se mantiene la imagen existente
+
+        db.session.commit()
+        flash('Ubicación actualizada correctamente.', 'success')
+        return redirect(url_for('locations.view_location', id_location=location.id_location))
+
+    return render_template('locations/edit.html', location=location)
+
+@locations_bp.route('/delete/<id_location>', methods=['POST'])
+@login_required
+@role_required('owner')
+def delete_location(id_location):
+    location = Location.query.get_or_404(id_location)
+
+    if session['user_id'] != location.id_user:
+        flash('No tienes permiso para eliminar esta ubicación.', 'danger')
+        return redirect(url_for('locations.list_locations'))
 
     db.session.delete(location)
     db.session.commit()
-    return jsonify({"message": "Local eliminado correctamente"}), 200
+    flash('Ubicación eliminada correctamente.', 'info')
+    return redirect(url_for('locations.list_locations'))
