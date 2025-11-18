@@ -23,22 +23,19 @@ Su objetivo es facilitar a usuarios locales y turistas el acceso a información 
 ## Capturas de pantalla
 
 ### Página de inicio
-![Página de inicio](screenshots/homepage.png)
+![Página de inicio](static/img/screenshots/homepage.png)
 
 ### Registro de usuario
-![Registro de usuario](screenshots/register.png)
+![Registro de usuario](static/img/screenshots/register.png)
 
 ### Perfil de usuario
-![Perfil de usuario](screenshots/user_profile.png)
-
-### Lista de locales
-![Lista de locales](screenshots/location_list.png)
+![Perfil de usuario](static/img/screenshots/user_profile.png)
 
 ### Detalle de local
-![Detalle de local](screenshots/location_detail.png)
+![Detalle de local](static/img/screenshots/location_detail.png)
 
 ### Gestión de reservas
-![Gestión de reservas](screenshots/reservation_management.png)
+![Gestión de reservas](static/img/screenshots/reservation_management.png)
 
 ## Instalación y configuración
 
@@ -127,3 +124,7 @@ flask run
 - Frontend: HTML, CSS, Bootstrap, JS
 - Base de datos: MySQL
 - Variables de entorno: python-dotenv
+
+## Documentacion de la API
+
+[Ver documentación (Postman)](https://documenter.getpostman.com/view/31369461/2sB3QGsAZG)
