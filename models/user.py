@@ -1,4 +1,5 @@
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import Enum
 from config.db import db
 import uuid
 
@@ -11,7 +12,12 @@ class User(db.Model):
     username = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(20), default='user') # 'user' o 'owner'
+
+    role = db.Column(Enum('user', 'owner', name='user_roles'), nullable=False, default='user') # user / owner
+
+    locations = db.relationship("Location", backref="user", lazy=True)
+    ratings = db.relationship("Rating", backref="user", lazy=True)
+    reservations = db.relationship("Reservation", backref="user", lazy=True)
 
     # Constructor de la clase User
     def __init__(self, username, email, password, role="user"):

@@ -16,7 +16,7 @@ class Rating(db.Model):
     def __init__(self, rate, comment, date, id_user, id_location):
         self.rate = rate
         self.comment = comment
-        self.date = date
+        self.date = date or datetime.date.today()
         self.id_user = id_user
         self.id_location = id_location
 
@@ -25,7 +25,7 @@ class Rating(db.Model):
             'id_rating': self.id_rating,
             'rate': self.rate,
             'comment': self.comment,
-            'date': self.date,
+            'date': self.date.strftime('%Y-%m-%d') if self.date else None,
             'id_user': self.id_user,
             'id_location': self.id_location
         }

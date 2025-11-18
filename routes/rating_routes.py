@@ -1,80 +1,80 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, request, session, redirect, url_for, flash, render_template
 from config.db import db
 from models.rating import Rating
-from routes.user_routes import token_required
+from models.location import Location
+from utils.authentication import login_required
 
-ratings_bp = Blueprint('ratings', __name__, url_prefix='/api/ratings')
+ratings_bp = Blueprint('ratings', __name__, url_prefix='/ratings')
 
-@ratings_bp.route('/', methods=['GET'])
-def get_ratings():
-    ratings = Rating.query.all()
+@ratings_bp.route('/my_ratings')
+@login_required
+def view():
+    if session.get('role') != 'user':
+        flash('No tienes permiso para acceder a esta sección.', 'danger')
+        return redirect(url_for('public'))  # o a otra página segura
 
-    if not ratings:
-        return jsonify({'message': 'No hay valoraciones registradas.'}), 200
+    id_user = session['user_id']
+    ratings = Rating.query.filter_by(id_user=id_user).all()
+    return render_template('ratings/view.html', ratings=ratings)
 
-    return jsonify([rating.to_json() for rating in ratings]), 200
+@ratings_bp.route('/edit/<id_rating>', methods=['GET', 'POST'])
+@login_required
+def edit_rating(id_rating):
+    rating = Rating.query.get_or_404(id_rating)
 
-@ratings_bp.route('/<string:id_rating>', methods=['GET'])
-def get_rating(id_rating):
-    rating = Rating.query.get(id_rating)
-    if not rating:
-        return jsonify({"error": "Valoración no encontrada"}), 404
-    return jsonify(rating.to_json()), 200
+    # mismo usuario
+    if session['user_id'] != rating.id_user:
+        flash('No tienes permiso para editar esta reseña.', 'danger')
+        return redirect(url_for('ratings.list_ratings', id_location=rating.id_location))
 
-@ratings_bp.route('/create', methods=['POST'])
-@token_required(role="user")
-def create_rating(current_user):
-    data = request.get_json()
+    if request.method == 'POST':
+        rating.rate = int(request.form['rate'])
+        rating.comment = request.form.get('comment')
+        db.session.commit()
+        flash('Reseña actualizada correctamente.', 'success')
+        return redirect(url_for('ratings.list_ratings', id_location=rating.id_location))
 
-    if not data or not data.get("rate") or not data.get("comment") or not data.get("date") or not data.get("id_location"):
-        return jsonify({"error": "Faltan campos obligatorios"}), 400
+    return render_template('ratings/edit.html', rating=rating)
 
-    new_rating = Rating(
-        rate=data["rate"],
-        comment=data["comment"],
-        date=data["date"],
-        id_user=current_user.id_user,
-        id_location=data["id_location"])
+@ratings_bp.route('/location/<id_location>')
+def list_ratings(id_location):
+    location = Location.query.get_or_404(id_location)
+    ratings = Rating.query.filter_by(id_location=id_location).all()
+    return render_template('ratings/list.html', location=location, ratings=ratings)
 
-    db.session.add(new_rating)
-    db.session.commit()
+@ratings_bp.route('/create/<id_location>', methods=['GET', 'POST'])
+@login_required
+def create_rating(id_location):
+    location = Location.query.get_or_404(id_location)
+    id_user = session['user_id']
 
-    return jsonify(new_rating.to_json()), 201
+    if request.method == 'POST':
+        rate = int(request.form['rate'])
+        comment = request.form.get('comment')
 
-@ratings_bp.route('/edit/<string:id_rating>', methods=['PUT'])
-@token_required(role="user")
-def edit_rating(current_user, id_rating):
-    rating = Rating.query.get(id_rating)
-    if not rating:
-        return jsonify({"error": "Valoración no encontrada"}), 404
+        # una reseña por local
+        existing = Rating.query.filter_by(id_user=id_user, id_location=id_location).first()
+        if existing:
+            flash('Ya has calificado este local.', 'warning')
+            return redirect(url_for('ratings.list_ratings', id_location=id_location))
 
-    if rating.id_user != current_user.id_user:
-        return jsonify({"error": "No autorizado"}), 403
+        new_rating = Rating(rate=rate, comment=comment, id_user=id_user, id_location=id_location)
+        db.session.add(new_rating)
+        db.session.commit()
+        flash('Calificación enviada correctamente.', 'success')
+        return redirect(url_for('ratings.list_ratings', id_location=id_location))
 
-    data = request.get_json()
+    return render_template('ratings/create.html', location=location)
 
-    if "rate" in data:
-        rating.rate = data["rate"]
-    if "comment" in data:
-        rating.comment = data["comment"]
-    if "date" in data:
-        rating.date = data["date"]
-    if "id_location" in data:
-        rating.id_location = data["id_location"]
-        
-    db.session.commit()
-    return jsonify(rating.to_json()), 200
-
-@ratings_bp.route('/delete/<string:id_rating>', methods=['DELETE'])
-@token_required(role="user")
-def delete_rating(current_user, id_rating):
-    rating = Rating.query.get(id_rating)
-    if not rating:
-        return jsonify({"error": "Valoración no encontrada"}), 404
-    
-    if rating.id_user != current_user.id_user:
-        return jsonify({"error": "No autorizado"}), 403
+@ratings_bp.route('/delete/<id_rating>', methods=['POST'])
+@login_required
+def delete_rating(id_rating):
+    rating = Rating.query.get_or_404(id_rating)
+    if session['user_id'] != rating.id_user:
+        flash('No tienes permiso para eliminar esta reseña.', 'danger')
+        return redirect(url_for('ratings.list_ratings', id_location=rating.id_location))
 
     db.session.delete(rating)
     db.session.commit()
-    return jsonify({"message": "Valoración eliminada correctamente"}), 200
+    flash('Reseña eliminada correctamente.', 'info')
+    return redirect(url_for('ratings.list_ratings', id_location=rating.id_location))
