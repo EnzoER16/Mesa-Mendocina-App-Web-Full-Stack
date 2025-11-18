@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Mis Reseñas · Mesa Mendocina{% endblock %}
+
+{% block content %}
+
+    <div class="d-flex justify-content-center mt-5">
+        <div class="border border-dark p-4 rounded bg-dark" style="width: 50%;">
+            <h2 class="text-center mb-4">Mis Reseñas</h2>
+
+            {% for rating in ratings %}
+                <div class="border rounded p-3 mb-3 bg-secondary text-light">
+                    <strong>{{ rating.location.name }}</strong> ⭐ {{ rating.rate }}/5
+                    <p>{{ rating.comment }}</p>
+                    <small>{{ rating.date }}</small>
+
+                    <div class="mt-2">
+                        <a href="{{ url_for('ratings.edit_rating', id_rating=rating.id_rating) }}" class="btn btn-sm btn-warning me-2">Editar</a>
+                        <form action="{{ url_for('ratings.delete_rating', id_rating=rating.id_rating) }}" method="POST" class="d-inline" 
+                            onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta reseña?');">
+                            <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                        </form>
+                    </div>
+                    
+                </div>
+            {% else %}
+                <p class="text-center">No has realizado ninguna reseña todavía.</p>
+            {% endfor %}
+
+        </div>
+    </div>
+    
+{% endblock %}
