@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Registrarse · Mesa Mendocina{% endblock %}
+
+{% block content %}
+
+    <div class="d-flex justify-content-center mt-5">
+        <form method="POST" class="border border-dark p-4 rounded bg-dark" style="width: 30%;">
+            <h2 class="text-center mb-4">Registrarse</h2>
+
+            <div class="mb-3">
+                <label>Nombre de usuario</label>
+                <input type="text" class="form-control" name="username" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Correo</label>
+                <input type="email" class="form-control" name="email" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Contraseña</label>
+                <input type="password" class="form-control" name="password" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Rol</label>
+                <select class="form-select" name="role" required>
+                    <option value="user" selected>Usuario</option>
+                    <option value="owner">Dueño</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-outline-primary me-2">Registrarse</button>
+            <a href="{{ url_for('public') }}" class="btn btn-outline-danger me-2">Cancelar</a>
+            <p class="mt-3">¿Ya tenés una cuenta? <a href="{{ url_for('users.user_login') }}">Iniciar sesión</a></p>
+            
+        </form>
+    </div>
+
+{% endblock %}
