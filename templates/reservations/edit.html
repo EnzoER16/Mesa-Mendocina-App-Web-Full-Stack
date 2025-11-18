@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Editar Reservación · Mesa Mendocina{% endblock %}
+
+{% block content %}
+
+    <div class="d-flex justify-content-center mt-5">
+        <div class="border border-dark p-4 rounded bg-dark text-light" style="width: 40%;">
+            <h2 class="text-center mb-4">Editar Reservación</h2>
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="date" class="form-label">Fecha</label>
+                    <input type="date" class="form-control" id="date" name="date" value="{{ reservation.date }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="time" class="form-label">Hora</label>
+                    <input type="time" class="form-control" id="time" name="time" value="{{ reservation.time }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="people" class="form-label">Personas</label>
+                    <input type="number" class="form-control" id="people" name="people" value="{{ reservation.people }}" required>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-outline-primary me-2">Guardar cambios</button>
+                    <a href="{{ url_for('reservations.view_reservation', id_reservation=reservation.id_reservation) }}" class="btn btn-outline-danger me-2">Cancelar</a>
+                </div>
+                
+            </form>
+        </div>
+    </div>
+
+{% endblock %}

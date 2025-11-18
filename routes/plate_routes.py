@@ -1,95 +1,103 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, request, session, redirect, url_for, flash, render_template, current_app
 from config.db import db
 from models.plate import Plate
 from models.location import Location
-from routes.user_routes import token_required
+from utils.authentication import login_required, role_required
+from werkzeug.utils import secure_filename
+import os
 
-plates_bp = Blueprint('plates', __name__, url_prefix='/api/plates')
+plates_bp = Blueprint('plates', __name__, url_prefix='/plates')
 
-@plates_bp.route('/', methods=['GET'])
-def get_plates():
-    plates = Plate.query.all()
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
-    if not plates:
-        return jsonify({'message': 'No hay platos registrados.'}), 200
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-    return jsonify([plate.to_json() for plate in plates]), 200
+@plates_bp.route('/create/<id_location>', methods=['GET', 'POST'])
+@login_required
+@role_required('owner')
+def create_plate(id_location):
+    location = Location.query.get_or_404(id_location)
 
-@plates_bp.route('/<string:id_plate>', methods=['GET'])
-def get_plate(id_plate):
-    plate = Plate.query.get(id_plate)
-    if not plate:
-        return jsonify({"error": "Plato no encontrado"}), 404
-    return jsonify(plate.to_json()), 200
+    # dueño del local
+    if session['user_id'] != location.id_user:
+        flash('No tienes permiso para agregar platos a este local.', 'danger')
+        return redirect(url_for('plates.list_plates'))
 
-@plates_bp.route('/create', methods=['POST'])
-@token_required(role="owner")
-def create_plate(current_user):
-    data = request.get_json()
+    if request.method == 'POST':
+        name = request.form['name']
+        description = request.form.get('description')
+        price = float(request.form['price'])
 
-    if not data or not data.get("name") or not data.get("description") or not data.get("price") or not data.get("id_location"):
-        return jsonify({"error": "Faltan campos obligatorios"}), 400
+        # imagen
+        file = request.files.get('image')
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            upload_path = os.path.join(current_app.root_path, 'static', 'img', 'plates')
+            os.makedirs(upload_path, exist_ok=True)
+            file.save(os.path.join(upload_path, filename))
+        else:
+            filename = 'no_image.png' # imagen por defecto
 
-    location = Location.query.get(data["id_location"])
-    if not location:
-        return jsonify({"error": "Local no encontrado"}), 404
+        new_plate = Plate(
+            name=name,
+            description=description,
+            price=price,
+            id_location=id_location,
+            image=filename
+        )
+        db.session.add(new_plate)
+        db.session.commit()
 
-    if str(location.id_user) != str(current_user.id_user):
-        return jsonify({"error": "No autorizado"}), 403
+        flash('Plato agregado correctamente.', 'success')
+        return redirect(url_for('locations.view_location', id_location=id_location))
 
-    new_plate = Plate(
-        name=data["name"],
-        description=data["description"],
-        price=data["price"],
-        id_location=data["id_location"])
+    return render_template('plates/create.html', location=location)
 
-    db.session.add(new_plate)
-    db.session.commit()
+@plates_bp.route('/edit/<id_plate>', methods=['GET', 'POST'])
+@login_required
+@role_required('owner')
+def edit_plate(id_plate):
+    plate = Plate.query.get_or_404(id_plate)
+    location = plate.location  # relación desde el modelo Plate
 
-    return jsonify(new_plate.to_json()), 201
+    if session['user_id'] != location.id_user:
+        flash('No tienes permiso para editar este plato.', 'danger')
+        return redirect(url_for('plates.list_plates'))
 
-@plates_bp.route('/edit/<string:id_plate>', methods=['PUT'])
-@token_required(role="owner")
-def edit_plate(current_user, id_plate):
-    plate = Plate.query.get(id_plate)
-    if not plate:
-        return jsonify({"error": "Plato no encontrado"}), 404
+    if request.method == 'POST':
+        plate.name = request.form['name']
+        plate.description = request.form.get('description')
+        plate.price = float(request.form['price'])
 
-    location = Location.query.get(plate.id_location)
-    if not location:
-        return jsonify({"error": "Local no encontrado"}), 404
+        # nueva imagen
+        file = request.files.get('image')
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            upload_path = os.path.join(current_app.root_path, 'static', 'img', 'plates')
+            os.makedirs(upload_path, exist_ok=True)
+            file.save(os.path.join(upload_path, filename))
+            plate.image = filename
 
-    if str(location.id_user) != str(current_user.id_user):
-        return jsonify({"error": "No autorizado"}), 403
+        db.session.commit()
+        flash('Plato actualizado correctamente.', 'success')
 
-    data = request.get_json()
+        return redirect(url_for('locations.view_location', id_location=location.id_location))
 
-    if "name" in data:
-        plate.name = data["name"]
-    if "description" in data:
-        plate.description = data["description"]
-    if "price" in data:
-        plate.price = data["price"]
-    if "id_location" in data:
-        plate.id_location = data["id_location"]
-        
-    db.session.commit()
-    return jsonify(plate.to_json()), 200
+    return render_template('plates/edit.html', plate=plate)
 
-@plates_bp.route('/delete/<string:id_plate>', methods=['DELETE'])
-@token_required(role="owner")
-def delete_plate(current_user, id_plate):
-    plate = Plate.query.get(id_plate)
-    if not plate:
-        return jsonify({"error": "Plato no encontrado"}), 404
-    
-    location = Location.query.get(plate.id_location)
-    if not location:
-        return jsonify({"error": "Local no encontrado"}), 404
+@plates_bp.route('/delete/<id_plate>', methods=['POST'])
+@login_required
+@role_required('owner')
+def delete_plate(id_plate):
+    plate = Plate.query.get_or_404(id_plate)
+    location = plate.location
 
-    if str(location.id_user) != str(current_user.id_user):
-        return jsonify({"error": "No autorizado"}), 403
+    if session['user_id'] != location.id_user:
+        flash('No tienes permiso para eliminar este plato.', 'danger')
+        return redirect(url_for('plates.list_plates'))
 
     db.session.delete(plate)
     db.session.commit()
-    return jsonify({"message": "Plato eliminado correctamente"}), 200
+    flash('Plato eliminado correctamente.', 'info')
+    return redirect(url_for('locations.view_location', id_location=location.id_location))

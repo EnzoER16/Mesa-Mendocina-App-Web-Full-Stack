@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Reseñas · Mesa Mendocina{% endblock %}
+
+{% block content %}
+
+    <h2>Reseñas de {{ location.name }}</h2>
+    <a href="{{ url_for('ratings.create_rating', id_location=location.id_location) }}" class="btn btn-primary mb-3">Agregar reseña</a>
+    
+    {% for rating in ratings %}
+
+        <div class="border rounded p-3 mb-2">
+            <strong>{{ rating.user.username }}</strong> ⭐ {{ rating.rate }}/5
+            <p>{{ rating.comment }}</p>
+            <small>{{ rating.date }}</small>
+        </div>
+
+    {% else %}
+        <p>No hay reseñas todavía.</p>
+    {% endfor %}
+
+{% endblock %}

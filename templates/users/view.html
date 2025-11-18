@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Mi perfil · Mesa Mendocina{% endblock %}
+
+{% block content %}
+
+    <div class="d-flex justify-content-center mt-5">
+        <div class="border border-dark p-4 rounded bg-dark text-light" style="width: 40%;">
+            <h2 class="mb-4">Mi perfil: {{ user.username }}</h2>
+
+            <p><strong>Correo:</strong> {{ user.email }}</p>
+            <p><strong>Rol:</strong> {{ 'Dueño' if user.role == 'owner' else 'Usuario' }}</p>
+
+            <div class="d-flex gap-3 mt-4">
+                <a href="{{ url_for('users.edit_user', id_user=user.id_user) }}" class="btn btn-outline-warning">Editar perfil</a>
+
+                <form action="{{ url_for('users.delete_user', id_user=user.id_user) }}" method="POST" class="d-inline">
+                    <button class="btn btn-outline-danger me-2" onclick="return confirm('¿Querés eliminar tu cuenta?')">
+                        Eliminar cuenta
+                    </button>
+                </form>
+            
+            </div>
+            
+        </div>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Nueva Reservación · Mesa Mendocina{% endblock %}
+
+{% block content %}
+
+    <div class="d-flex justify-content-center mt-5">
+        <div class="border border-dark p-4 rounded bg-dark text-light" style="width: 40%;">
+            <h2 class="text-center mb-4">Nueva Reservación en:<br>{{ location.name }}</h2>
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="date" class="form-label">Fecha</label>
+                    <input type="date" class="form-control" id="date" name="date" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="time" class="form-label">Hora</label>
+                    <input type="time" class="form-control" id="time" name="time" step="900" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="people" class="form-label">Cantidad de personas</label>
+                    <input type="number" class="form-control" id="people" name="people" min="1" required>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-outline-primary me-2">Reservar</button>
+                    <a href="{{ url_for('locations.view_location', id_location=location.id_location) }}" class="btn btn-outline-danger me-2">Cancelar</a>
+                </div>
+                
+            </form>
+        </div>
+    </div>
+
+{% endblock %}

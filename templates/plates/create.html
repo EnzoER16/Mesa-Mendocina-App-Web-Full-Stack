@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Nuevo Plato · Mesa Mendocina{% endblock %}
+
+{% block content %}
+
+    <div class="d-flex justify-content-center mt-5">
+        <form method="POST" enctype="multipart/form-data" class="border border-dark p-4 rounded bg-dark text-light" style="width: 30%;">
+            <h2 class="text-center mb-4">Agregar Plato</h2>
+
+            <div class="mb-3">
+                <label>Nombre del plato</label>
+                <input type="text" name="name" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Descripción</label>
+                <textarea name="description" class="form-control"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label>Precio</label>
+                <input type="number" name="price" step="0.01" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Imagen del plato</label>
+                <input type="file" name="image" class="form-control" accept="image/*">
+            </div>
+
+            <button class="btn btn-outline-success me-2">Guardar</button>
+            <a href="{{ url_for('locations.view_location', id_location=location.id_location) }}" class="btn btn-outline-danger">Cancelar</a>
+        
+        </form>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Editar Reseña · Mesa Mendocina{% endblock %}
+
+{% block content %}
+
+    <div class="d-flex justify-content-center mt-5">
+        <form method="POST" class="border border-dark p-4 rounded bg-dark" style="width: 30%;">
+            <h2 class="text-center mb-4">Editar Reseña</h2>
+
+            <div class="mb-3">
+                <label class="form-label">Calificación</label>
+                <select class="form-select" name="rate">
+                    {% for i in range(1,6) %}
+                        <option value="{{ i }}" {% if rating.rate == i %}selected{% endif %}>{{ i }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Comentario</label>
+                <textarea class="form-control" name="comment" rows="3">{{ rating.comment }}</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-outline-primary me-2">Guardar cambios</button>
+            <a href="{{ url_for('ratings.view') }}" class="btn btn-outline-danger">Cancelar</a>
+            
+        </form>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Crear Local · Mesa Mendocina{% endblock %}
+
+{% block content %}
+
+    <div class="d-flex justify-content-center mt-5">
+        <form method="POST" enctype="multipart/form-data" class="border border-dark p-4 rounded bg-dark text-light shadow" style="width: 40%;">
+            <h2 class="text-center mb-4">Registrar nuevo local</h2>
+
+            <div class="mb-3">
+                <label>Nombre</label>
+                <input type="text" class="form-control" name="name" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Dirección</label>
+                <input type="text" class="form-control" name="address" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Departamento</label>
+                <select class="form-select" name="department" required>
+                    <option value="" disabled selected>Selecciona un departamento</option>
+                    {% for d in departments %}
+                        <option value="{{ d }}">{{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label>Teléfono</label>
+                <input type="text" class="form-control" name="phone" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Descripción</label>
+                <textarea class="form-control" name="description" rows="3"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label>Imagen del local</label>
+                <input type="file" class="form-control" name="image">
+                <small class="text-muted">Si no seleccionas ninguna, se usará la imagen por defecto.</small>
+            </div>
+
+            <div class="text-center">
+                <button type="submit" class="btn btn-outline-primary me-2">Crear local</button>
+                <a href="{{ url_for('locations.list_locations') }}" class="btn btn-outline-danger me-2">Cancelar</a>
+            </div>
+            
+        </form>
+    </div>
+
+{% endblock %}

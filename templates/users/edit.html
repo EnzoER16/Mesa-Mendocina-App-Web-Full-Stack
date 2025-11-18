@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Editar perfil · Mesa Mendocina{% endblock %}
+
+{% block content %}
+
+    <div class="d-flex justify-content-center mt-5">
+        <form method="POST" class="border border-dark p-4 rounded bg-dark" style="width: 30%;">
+            <h2 class="text-center mb-4">Editar perfil</h2>
+
+            <div class="mb-3">
+                <label>Nombre</label>
+                <input type="text" class="form-control" name="username" value="{{ user.username }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Correo</label>
+                <input type="email" class="form-control" name="email" value="{{ user.email }}" required>
+            </div>
+            
+            <div class="mb-3">
+                <label>Nueva contraseña</label>
+                <input type="password" class="form-control" name="password">
+            </div>
+
+            <button class="btn btn-outline-primary me-2">Guardar cambios</button>
+            <a href="{{ url_for('users.view_user', id_user=session['user_id']) }}" class="btn btn-outline-danger">Cancelar</a>
+            
+        </form>
+    </div>
+
+{% endblock %}

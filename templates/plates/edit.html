@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Editar Plato · Mesa Mendocina{% endblock %}
+
+{% block content %}
+
+    <div class="d-flex justify-content-center mt-5">
+        <form method="POST" enctype="multipart/form-data" class="border border-dark p-4 rounded bg-dark text-light" style="width: 30%;">
+            <h2 class="text-center mb-4">Editar Plato</h2>
+
+            <div class="mb-3">
+                <label>Nombre</label>
+                <input type="text" name="name" class="form-control" value="{{ plate.name }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Descripción</label>
+                <textarea name="description" class="form-control">{{ plate.description }}</textarea>
+            </div>
+
+            <div class="mb-3">
+                <label>Precio</label>
+                <input type="number" name="price" step="0.01" class="form-control" value="{{ plate.price }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Cambiar imagen</label>
+                <input type="file" name="image" class="form-control" accept="image/*">
+            </div>
+
+            <button class="btn btn-outline-success me-2">Actualizar</button>
+            <a href="{{ url_for('locations.view_location', id_location=plate.location.id_location) }}" class="btn btn-outline-danger">Cancelar</a>
+        
+        </form>
+    </div>
+
+{% endblock %}

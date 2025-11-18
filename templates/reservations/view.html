@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Detalle de Reservación · Mesa Mendocina{% endblock %}
+
+{% block content %}
+
+    <div class="d-flex justify-content-center mt-5">
+        <div class="border border-dark p-4 rounded bg-dark text-light" style="width: 40%;">
+            <h2 class="text-center mb-4">Detalle de Reservación</h2>
+
+            <div class="mb-3">
+                <p><strong>Local:</strong> {{ reservation.location.name }}</p>
+                <p><strong>Fecha:</strong> {{ reservation.date }}</p>
+                <p><strong>Hora:</strong> {{ reservation.time }}</p>
+                <p><strong>Personas:</strong> {{ reservation.people }}</p>
+
+                <p><strong>Estado:</strong>
+                    {% if reservation.status == 'accepted' %}
+                        <span class="badge bg-success">Aceptada</span>
+                    {% elif reservation.status == 'rejected' %}
+                        <span class="badge bg-danger">Rechazada</span>
+                    {% elif reservation.status == 'cancelled' %}
+                        <span class="badge bg-secondary">Cancelada</span>
+                    {% else %}
+                        <span class="badge bg-warning">Pendiente</span>
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="d-flex justify-content-center gap-2 mt-4">
+                {% if session.get('user_id') == reservation.id_user and reservation.status not in ['cancelled', 'rejected'] %}
+
+                    {% if reservation.status == 'pending' %}
+                        <a href="{{ url_for('reservations.edit_reservation', id_reservation=reservation.id_reservation) }}"
+                        class="btn btn-outline-warning">
+                        Editar reservación
+                        </a>
+                    {% endif %}
+
+                    <form action="{{ url_for('reservations.cancel_reservation', id_reservation=reservation.id_reservation) }}"
+                        method="POST"
+                        onsubmit="return confirm('¿Seguro que querés cancelar esta reservación?')"
+                        class="d-inline">
+                        <button class="btn btn-outline-danger">Cancelar reservación</button>
+                    </form>
+
+                {% endif %}
+
+                {% if session.get('role') == 'owner' and reservation.status == 'pending' %}
+
+                    <form action="{{ url_for('reservations.change_status', id_reservation=reservation.id_reservation, status='accepted') }}"
+                        method="POST" class="d-inline">
+                        <button class="btn btn-outline-success">Aceptar</button>
+                    </form>
+                    <form action="{{ url_for('reservations.change_status', id_reservation=reservation.id_reservation, status='rejected') }}"
+                        method="POST" class="d-inline">
+                        <button class="btn btn-outline-danger">Rechazar</button>
+                    </form>
+
+                {% endif %}
+
+                <a href="{{ url_for('reservations.list_reservations') }}" class="btn btn-outline-light">Volver</a>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
