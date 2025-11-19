@@ -82,16 +82,17 @@
         </div>
 
         <!-- reseñas -->
+        
+        <hr class="border-secondary my-5">
+        <h3 class="text-light mb-4">Reseñas</h3>
+
+        {% if session.get('role') == 'user' %}
+            <a href="{{ url_for('ratings.create_rating', id_location=location.id_location) }}" class="btn btn-success mb-4">
+                Dejar reseña
+            </a>
+        {% endif %}
+
         {% if location.ratings %}
-            <hr class="border-secondary my-5">
-            <h3 class="text-light mb-4">Reseñas</h3>
-
-            {% if session.get('role') == 'user' %}
-                <a href="{{ url_for('ratings.create_rating', id_location=location.id_location) }}" class="btn btn-success mb-4">
-                    Dejar reseña
-                </a>
-            {% endif %}
-
             <div class="row g-4">
                 {% for rating in location.ratings %}
                     <div class="col-md-6">
