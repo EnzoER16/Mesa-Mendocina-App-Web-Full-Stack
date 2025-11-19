@@ -7,6 +7,7 @@ from routes.rating_routes import ratings_bp
 from routes.plate_routes import plates_bp
 from routes.reservation_routes import reservations_bp
 from flask_migrate import Migrate
+from models.location import Location
 
 app = Flask(__name__)
 app.config.from_object(Config)
